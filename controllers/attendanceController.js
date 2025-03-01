@@ -1,17 +1,25 @@
-import express from 'express'
+import express from 'express';
+import mongoose from 'mongoose';
 import Attendance from "../models/attendanceModel.js";
 import Employee from "../models/employeeModel.js";
 
 export const markAttendance = async (req, res) => {
   try {
-    console.log("Received Data:", req.body); // Debugging
+    console.log("Received Data:", req.body);
 
     const { employeeId, date, status } = req.body;
     if (!employeeId || !date || !status) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    let attendance = await Attendance.findOne({ employeeId, date: new Date(date) });
+    if (!mongoose.Types.ObjectId.isValid(employeeId)) {
+      return res.status(400).json({ message: "Invalid Employee ID" });
+    }
+
+    let attendance = await Attendance.findOne({
+      employeeId,
+      date: { $gte: new Date(date).setHours(0, 0, 0, 0), $lt: new Date(date).setHours(23, 59, 59, 999) }
+    });
 
     if (attendance) {
       attendance.status = status;
@@ -30,7 +38,9 @@ export const markAttendance = async (req, res) => {
 export const getAttendance = async (req, res) => {
   try {
     const employees = await Employee.find();
-    const attendanceRecords = await Attendance.find({ date: new Date().toISOString().split('T')[0] });
+    const attendanceRecords = await Attendance.find({
+      date: { $gte: new Date().setHours(0, 0, 0, 0), $lt: new Date().setHours(23, 59, 59, 999) }
+    });
 
     const attendanceList = employees.map(emp => {
       const attendance = attendanceRecords.find(att => att.employeeId.toString() === emp._id.toString());
@@ -71,7 +81,7 @@ export const viewAttendance = async (req, res) => {
 
     const startDate = new Date(date);
     const endDate = new Date(date);
-    endDate.setDate(endDate.getDate() + 1);
+    endDate.setUTCHours(23, 59, 59, 999);
 
     const attendance = await Attendance.find({
       date: { $gte: startDate, $lt: endDate }
@@ -95,7 +105,10 @@ export const getAllAttendance = async (req, res) => {
   try {
     console.log("Fetching all attendance records...");
 
-    const attendance = await Attendance.find().populate("employeeId");
+    const attendance = await Attendance.find({}).populate({
+      path: "employeeId",
+      select: "name department position"
+    });
 
     console.log("Attendance Data Fetched:", attendance);
 
@@ -115,4 +128,3 @@ export const getAllAttendance = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
