@@ -5,8 +5,7 @@ const router = express.Router();
 
 router.post("/mark", markAttendance);
 router.get("/view", viewAttendance);
-
-router.get("/", getAllAtendance);
+router.get("/", getAllAttendance);
 
 router.delete("/:id", deleteAttendance);
 
