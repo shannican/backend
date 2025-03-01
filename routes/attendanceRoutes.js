@@ -1,5 +1,5 @@
 import express from "express";
-import { deleteAttendance, getAllAtendance, markAttendance, viewAttendance } from "../controllers/attendanceController.js";
+import { deleteAttendance, getAllAttendance, markAttendance, viewAttendance } from "../controllers/attendanceController.js";
 
 const router = express.Router();
 
