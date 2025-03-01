@@ -73,4 +73,23 @@ router.put('/:id/status', async (req, res) => {
   }
 });
 
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log(`Deleting candidate with ID: ${id}`);
+
+    const candidate = await CandidateModel.findById(id);
+    if (!candidate) {
+      return res.status(404).json({ message: 'Candidate not found' });
+    }
+
+    await CandidateModel.findByIdAndDelete(id);
+    return res.status(200).json({ message: 'Candidate deleted successfully' });
+  } catch (error) {
+    console.error("Error deleting candidate:", error);
+    return res.status(500).json({ error: 'Failed to delete candidate' });
+  }
+});
+
+
 export default router;

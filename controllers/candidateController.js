@@ -29,7 +29,6 @@ export const addCandidate = async (req, res) => {
     res.status(500).json({ message: "Server Error", error: error.message });
   }
 };
-
 exports.getCandidates = async (req, res) => {
   try {
     const candidates = await Candidate.find();
@@ -67,20 +66,31 @@ exports.downloadResume = async (req, res) => {
 exports.deleteCandidate = async (req, res) => {
   try {
     const { id } = req.params;
+    console.log(`Deleting Candidate with ID: ${id}`);
+
     const candidate = await Candidate.findById(id);
     if (!candidate) {
+      console.log("Candidate not found!");
       return res.status(404).json({ msg: "Candidate not found" });
     }
 
     const resumePath = path.join(__dirname, "../uploads", candidate.resume);
+    console.log(`Resume Path: ${resumePath}`);
+
     if (fs.existsSync(resumePath)) {
       fs.unlinkSync(resumePath);
+      console.log("Resume file deleted successfully.");
+    } else {
+      console.log("Resume file not found, skipping delete.");
     }
 
     await Candidate.findByIdAndDelete(id);
+    console.log("Candidate deleted from database.");
+
     res.status(200).json({ msg: "Candidate deleted successfully" });
   } catch (error) {
     console.error("Error in deleteCandidate:", error);
     res.status(500).json({ msg: "Server Error", error: error.message });
   }
 };
+

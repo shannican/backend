@@ -4,35 +4,29 @@ import Employee from "../models/employeeModel.js";
 
 export const markAttendance = async (req, res) => {
   try {
-    const { employeeId, date, status } = req.body;
-    console.log(req.body);
-    
+    console.log("Received Data:", req.body); // Debugging
 
+    const { employeeId, date, status } = req.body;
     if (!employeeId || !date || !status) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    let attendance = await Attendance.findOne({ 
-      employeeId, 
-      date
-    });
+    let attendance = await Attendance.findOne({ employeeId, date });
 
     if (attendance) { 
       attendance.status = status;
     } else {
-      attendance = new Attendance({ 
-        employeeId, 
-        date: new Date(date), 
-        status 
-      });
+      attendance = new Attendance({ employeeId, date: new Date(date), status });
     }
 
     await attendance.save();
     res.status(200).json({ message: "Attendance marked successfully" });
   } catch (error) {
+    console.error("Error in markAttendance:", error);
     res.status(500).json({ error: error.message });
   }
 };
+
 
 export const getAttendance = async (req, res) => {
   try {
