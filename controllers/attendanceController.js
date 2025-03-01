@@ -1,4 +1,4 @@
-import e from "express";
+import express from 'express'
 import Attendance from "../models/attendanceModel.js";
 import Employee from "../models/employeeModel.js";
 
@@ -11,9 +11,9 @@ export const markAttendance = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    let attendance = await Attendance.findOne({ employeeId, date });
+    let attendance = await Attendance.findOne({ employeeId, date: new Date(date) });
 
-    if (attendance) { 
+    if (attendance) {
       attendance.status = status;
     } else {
       attendance = new Attendance({ employeeId, date: new Date(date), status });
@@ -27,11 +27,11 @@ export const markAttendance = async (req, res) => {
   }
 };
 
-
 export const getAttendance = async (req, res) => {
   try {
     const employees = await Employee.find();
-    const attendanceRecords = await Attendance.find({ date: new Date().toDateString() });
+    const attendanceRecords = await Attendance.find({ date: new Date().toISOString().split('T')[0] });
+
     const attendanceList = employees.map(emp => {
       const attendance = attendanceRecords.find(att => att.employeeId.toString() === emp._id.toString());
       return {
@@ -52,9 +52,12 @@ export const getAttendance = async (req, res) => {
 export const deleteAttendance = async (req, res) => {
   try {
     const { id } = req.params;
-    await Attendance.findOneAndDelete({ 
-      _id: id
-    });
+    const deletedAttendance = await Attendance.findByIdAndDelete(id);
+
+    if (!deletedAttendance) {
+      return res.status(404).json({ message: "Attendance record not found" });
+    }
+
     res.status(200).json({ message: "Attendance deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -64,22 +67,21 @@ export const deleteAttendance = async (req, res) => {
 export const viewAttendance = async (req, res) => {
   try {
     const { date } = req.query;
+    if (!date) return res.status(400).json({ message: "Date is required" });
+
     const startDate = new Date(date);
     const endDate = new Date(date);
     endDate.setDate(endDate.getDate() + 1);
 
     const attendance = await Attendance.find({
-      date: {
-        $gte: startDate,
-        $lt: endDate
-      }
+      date: { $gte: startDate, $lt: endDate }
     }).populate('employeeId', 'name department');
 
     const formattedAttendance = attendance.map(record => ({
       _id: record._id,
-      employeeName: record.employeeId.name,
-      department: record.employeeId.department,
-      date: record.date,
+      employeeName: record.employeeId?.name || "Unknown",
+      department: record.employeeId?.department || "Unknown",
+      date: record.date.toISOString().split('T')[0],
       status: record.status
     }));
 
@@ -89,22 +91,21 @@ export const viewAttendance = async (req, res) => {
   }
 };
 
-export const getAllAtendance = async (req, res) => {
+export const getAllAttendance = async (req, res) => {
   try {
     const attendance = await Attendance.find().populate('employeeId');
     const formattedAttendance = attendance.map(record => ({
       _id: record._id,
-      employeeName: record.employeeId.name,
-      department: record.employeeId.department,
-      date: record.date,
+      employeeName: record.employeeId?.name || "Unknown",
+      department: record.employeeId?.department || "Unknown",
+      date: record.date.toISOString().split('T')[0],
       status: record.status,
-      position: record.employeeId.position,
-      employeeId: record.employeeId._id.toString()
+      position: record.employeeId?.position || "Unknown",
+      employeeId: record.employeeId?._id?.toString() || "Unknown"
     }));
-    console.log(formattedAttendance);
-    
+
     res.status(200).json(formattedAttendance);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-}
+};
