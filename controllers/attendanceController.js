@@ -93,19 +93,26 @@ export const viewAttendance = async (req, res) => {
 
 export const getAllAttendance = async (req, res) => {
   try {
-    const attendance = await Attendance.find().populate('employeeId');
-    const formattedAttendance = attendance.map(record => ({
+    console.log("Fetching all attendance records...");
+
+    const attendance = await Attendance.find().populate("employeeId");
+
+    console.log("Attendance Data Fetched:", attendance);
+
+    const formattedAttendance = attendance.map((record) => ({
       _id: record._id,
       employeeName: record.employeeId?.name || "Unknown",
       department: record.employeeId?.department || "Unknown",
-      date: record.date.toISOString().split('T')[0],
+      date: record.date.toISOString().split("T")[0],
       status: record.status,
       position: record.employeeId?.position || "Unknown",
-      employeeId: record.employeeId?._id?.toString() || "Unknown"
+      employeeId: record.employeeId?._id?.toString() || "Unknown",
     }));
 
     res.status(200).json(formattedAttendance);
   } catch (error) {
+    console.error("Error fetching attendance:", error);
     res.status(500).json({ error: error.message });
   }
 };
+
